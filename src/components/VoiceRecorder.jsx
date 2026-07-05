@@ -17,6 +17,8 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
   const recognitionRef      = useRef(null);
   const isRecordingRef      = useRef(false);
   const targetNoteIdRef     = useRef(null);
+  const lastProcessedIndexRef = useRef(0);
+  const lastFinalStringRef    = useRef('');
 
   // Always call the latest version of the callback without recreating the engine
   const onChunkRef = useRef(onTranscriptChunk);
@@ -32,13 +34,34 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
     recognition.interimResults = true;
     recognition.lang           = 'pt-BR';
 
+    recognition.onstart = () => {
+      lastProcessedIndexRef.current = 0;
+    };
+
     recognition.onresult = (event) => {
       let currentInterim = '';
       let currentFinal = '';
 
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
+      // Fix Android bug where resultIndex is always 0 despite new items
+      const startIndex = Math.max(event.resultIndex, lastProcessedIndexRef.current);
+
+      for (let i = startIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
-          currentFinal += event.results[i][0].transcript;
+          let originalT = event.results[i][0].transcript;
+          let t = originalT;
+
+          // Fix Android bug where a new session repeats the entire previous buffer
+          if (lastFinalStringRef.current) {
+            const prev = lastFinalStringRef.current.trim();
+            const curr = t.trim();
+            if (prev && curr.toLowerCase().startsWith(prev.toLowerCase())) {
+              t = ' ' + curr.substring(prev.length).trim();
+            }
+          }
+
+          currentFinal += t;
+          lastFinalStringRef.current = originalT;
+          lastProcessedIndexRef.current = i + 1;
         } else {
           currentInterim += event.results[i][0].transcript;
         }
@@ -95,6 +118,7 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
       try { recognitionRef.current.stop(); } catch {}
     } else {
       // Start — await note creation before starting the engine
+      lastFinalStringRef.current = ''; // Clear deduplication memory on explicit start
       const noteId = await onRecordStart();
       targetNoteIdRef.current = noteId;
       isRecordingRef.current  = true;
