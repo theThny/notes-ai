@@ -58,7 +58,7 @@ const getRandomImage = (htmlContent) => {
   return images[randomIndex];
 };
 
-export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onMoveNote }) => {
+export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onMoveNote, theme = 'light' }) => {
   const [selectedFolder, setSelectedFolder] = useState('all');
   const [activeNoteMenu, setActiveNoteMenu] = useState(null);
   const [showMoveModal, setShowMoveModal] = useState(false);
@@ -184,19 +184,19 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
   }
 
   let headerGlow = 'none';
-  if (weather.temp !== null) {
-    const makeGlow = (c1, c2) => `radial-gradient(circle at 0px 0px, rgba(255,255,255,0.2) 0%, transparent 150px), radial-gradient(circle at 80px 60px, ${c1} 0%, transparent 350px), radial-gradient(circle at 200px 150px, ${c2} 0%, transparent 500px)`;
+  if (theme === 'dark' && weather.temp !== null) {
+    const makeGlow = (c1, c2) => `radial-gradient(circle at 0px 0px, rgba(255,255,255,0.15) 0%, transparent 100px), radial-gradient(circle at 50px 40px, ${c1} 0%, transparent 250px), radial-gradient(circle at 120px 100px, ${c2} 0%, transparent 400px)`;
     
     if (isNight) {
-      headerGlow = makeGlow('rgba(102, 0, 255, 0.45)', 'rgba(255, 0, 128, 0.3)');
+      headerGlow = makeGlow('rgba(102, 0, 255, 0.35)', 'rgba(255, 0, 128, 0.25)');
     } else if (weather.type === 'rain' || weather.type === 'storm') {
-      headerGlow = makeGlow('rgba(0, 229, 255, 0.45)', 'rgba(41, 98, 255, 0.3)');
+      headerGlow = makeGlow('rgba(0, 229, 255, 0.35)', 'rgba(41, 98, 255, 0.25)');
     } else if (weather.temp >= 28) {
-      headerGlow = makeGlow('rgba(255, 51, 0, 0.45)', 'rgba(255, 200, 0, 0.3)');
+      headerGlow = makeGlow('rgba(255, 51, 0, 0.35)', 'rgba(255, 200, 0, 0.25)');
     } else if (weather.temp <= 18) {
-      headerGlow = makeGlow('rgba(0, 153, 255, 0.45)', 'rgba(0, 255, 204, 0.3)');
+      headerGlow = makeGlow('rgba(0, 153, 255, 0.35)', 'rgba(0, 255, 204, 0.25)');
     } else {
-      headerGlow = makeGlow('rgba(0, 200, 83, 0.45)', 'rgba(255, 214, 0, 0.3)');
+      headerGlow = makeGlow('rgba(0, 200, 83, 0.35)', 'rgba(255, 214, 0, 0.25)');
     }
   }
 
@@ -204,18 +204,21 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
     <div className="home-container scrollbar-hide" style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', flex: 1, backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', padding: '40px 5%', overflowX: 'hidden', overflowY: 'auto' }}>
       
       {/* Glow Decorativo Global da Página (Preso à quina superior esquerda) */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '600px',
-        height: '600px',
-        backgroundImage: headerGlow,
-        filter: 'blur(60px)',
-        zIndex: 0,
-        pointerEvents: 'none',
-        opacity: 0.75
-      }} />
+      {theme === 'dark' && (
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '400px',
+          maxWidth: '100%',
+          height: '400px',
+          backgroundImage: headerGlow,
+          filter: 'blur(50px)',
+          zIndex: 0,
+          pointerEvents: 'none',
+          opacity: 0.6
+        }} />
+      )}
 
       {/* 1. Cabeçalho Principal */}
       <div style={{ position: 'relative', marginBottom: '36px', marginTop: '8px', padding: '0 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px' }}>

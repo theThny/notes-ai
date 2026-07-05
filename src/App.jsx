@@ -256,6 +256,7 @@ function App() {
           onSelectNote={id => { setActiveNoteId(id); setCurrentView('editor'); setIsSidebarOpen(false); }} 
           onDeleteNote={handleDeleteNote}
           onMoveNote={handleMoveNote}
+          theme={settings.appTheme || 'light'}
         />
       ) : (
         <Editor 
