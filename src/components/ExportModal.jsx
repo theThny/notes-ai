@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import html2pdf from 'html2pdf.js';
 import cssText from '../index.css?raw';
+import { cleanText } from '../utils/sanitize';
 
-export const ExportModal = ({ folders, notes, onClose }) => {
+export const ExportModal = ({ folders, notes, onClose, onToast }) => {
   const [selectedNotes, setSelectedNotes] = useState(new Set());
   const [format, setFormat] = useState('md');
   const [isExporting, setIsExporting] = useState(false);
@@ -39,14 +40,10 @@ export const ExportModal = ({ folders, notes, onClose }) => {
   };
 
   const generateHTMLContent = (note) => {
-    const title = `<h1>${note.title}</h1>`;
-    const body = (note.blocks || []).map(b => {
-      const htmlText = b.text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a class="markdown-link" href="$2">$1</a>');
-      if (b.type === 'ai') {
-        return `<div class="block-ai" style="padding: 10px; margin-bottom: 10px;">${htmlText}</div>`;
-      }
-      return `<div class="block-transcription" style="padding: 10px; margin-bottom: 10px;">${htmlText}</div>`;
-    }).join('');
+    const title = `<h1>${cleanText(note.title)}</h1>`;
+    let htmlText = note.content || '';
+    htmlText = cleanText(htmlText);
+    const body = `<div class="editor-content-export">${htmlText}</div>`;
     
     return `
       <html>
@@ -69,7 +66,11 @@ export const ExportModal = ({ folders, notes, onClose }) => {
 
     try {
       for (let note of notesToExport) {
-        const textContent = `# ${note.title}\n\n` + (note.blocks || []).map(b => b.text).join('\n\n');
+        // Just strip HTML for markdown/txt exports
+        const div = document.createElement('div');
+        div.innerHTML = cleanText(note.content || '');
+        const plainTextContent = div.innerText;
+        const textContent = `# ${note.title}\n\n${plainTextContent}`;
         
         if (format === 'md' || format === 'txt') {
           const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
@@ -92,15 +93,12 @@ export const ExportModal = ({ folders, notes, onClose }) => {
           title.textContent = note.title;
           wrapper.appendChild(title);
 
-          (note.blocks || []).forEach(b => {
-            const htmlText = b.text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a class="markdown-link" href="$2">$1</a>');
-            const blockDiv = document.createElement('div');
-            blockDiv.className = b.type === 'ai' ? 'block-ai' : 'block-transcription';
-            blockDiv.style.padding = '10px';
-            blockDiv.style.marginBottom = '10px';
-            blockDiv.innerHTML = htmlText;
-            wrapper.appendChild(blockDiv);
-          });
+          let htmlText = note.content || '';
+          htmlText = cleanText(htmlText);
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'editor-content-export';
+          contentDiv.innerHTML = htmlText;
+          wrapper.appendChild(contentDiv);
           
           element.appendChild(wrapper);
           
@@ -120,7 +118,7 @@ export const ExportModal = ({ folders, notes, onClose }) => {
         }
       }
     } catch (e) {
-      alert("Erro na exportação: " + e.message);
+      if (onToast) onToast("Erro na exportação: " + e.message);
     } finally {
       setIsExporting(false);
       onClose();

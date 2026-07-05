@@ -1,5 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { HelpCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { HelpCircle, ExternalLink } from 'lucide-react';
+
+const ApiKeyLink = ({ href, label }) => (
+  <a
+    href={href}
+    target="_blank"
+    rel="noopener noreferrer"
+    style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      fontSize: '0.8rem',
+      color: 'var(--primary-color)',
+      textDecoration: 'none',
+      opacity: 0.85,
+      transition: 'opacity 0.15s'
+    }}
+    onMouseEnter={e => e.currentTarget.style.opacity = 1}
+    onMouseLeave={e => e.currentTarget.style.opacity = 0.85}
+  >
+    {label}
+    <ExternalLink size={11} />
+  </a>
+);
 
 export const SettingsModal = ({ settings, onSave, onClose }) => {
   const [geminiKey, setGeminiKey] = useState(settings.geminiKey || '');
@@ -37,36 +60,48 @@ export const SettingsModal = ({ settings, onSave, onClose }) => {
 
             {activeProvider === 'gemini' && (
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '0.9rem' }}>
-                  Google Gemini API Key
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label style={{ fontWeight: 500, fontSize: '0.9rem', margin: 0 }}>
+                    Google Gemini API Key
+                  </label>
+                  <ApiKeyLink href="https://aistudio.google.com/app/apikey" label="Gerar chave" />
+                </div>
                 <input
                   type="password"
                   className="input-field"
                   value={geminiKey}
                   onChange={e => setGeminiKey(e.target.value)}
                   placeholder="AIzaSy..."
+                  autoComplete="new-password"
+                  spellCheck="false"
+                  data-lpignore="true"
                 />
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Required to use Google Gemini.
+                  Necessário para usar o Google Gemini.
                 </div>
               </div>
             )}
 
             {activeProvider === 'groq' && (
               <div style={{ marginBottom: '15px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500, fontSize: '0.9rem' }}>
-                  Groq API Key
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label style={{ fontWeight: 500, fontSize: '0.9rem', margin: 0 }}>
+                    Groq API Key
+                  </label>
+                  <ApiKeyLink href="https://console.groq.com/keys" label="Gerar chave" />
+                </div>
                 <input
                   type="password"
                   className="input-field"
                   value={groqKey}
                   onChange={e => setGroqKey(e.target.value)}
                   placeholder="gsk_..."
+                  autoComplete="new-password"
+                  spellCheck="false"
+                  data-lpignore="true"
                 />
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Required to use Groq (Llama 3).
+                  Necessário para usar o Groq (Llama 3).
                 </div>
               </div>
             )}
@@ -110,9 +145,6 @@ export const SettingsModal = ({ settings, onSave, onClose }) => {
               >
                 <option value="light">Claro (Padrão)</option>
                 <option value="dark">Escuro (Dark Mode)</option>
-                <option value="classic">Clássico (Script)</option>
-                <option value="accessible">Alta Acessibilidade</option>
-                <option value="accessible-dark">Acessibilidade Escura</option>
               </select>
             </div>
           </div>

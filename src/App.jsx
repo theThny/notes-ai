@@ -1,199 +1,287 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { NoteList } from './components/NoteList';
 import { Editor } from './components/Editor';
 import { VoiceRecorder } from './components/VoiceRecorder';
 import { SettingsModal } from './components/SettingsModal';
 import { ExportModal } from './components/ExportModal';
+import { Toast } from './components/Notifications';
 import { storage } from './services/storage';
+import { Home } from './components/Home';
 
 function App() {
-  const [folders, setFolders] = useState([]);
-  const [notes, setNotes] = useState([]);
+  const [folders, setFolders]           = useState([]);
+  const [notes, setNotes]               = useState([]);
   const [activeFolderId, setActiveFolderId] = useState(null);
   const [activeNoteId, setActiveNoteId] = useState(null);
-  
-  const [settings, setSettings] = useState({ apiKey: '', appTheme: 'light' });
+  const [currentView, setCurrentView]   = useState('home');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [settings, setSettings]         = useState({ apiKey: '', appTheme: 'light' });
   const [showSettings, setShowSettings] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
 
+  // ── Keep a stable ref to the latest notes for use inside callbacks ─────────
+  const notesRef = useRef(notes);
+  useEffect(() => { notesRef.current = notes; }, [notes]);
+
+  // ── Debounced background persist ───────────────────────────────────────────
+  // The timer fires 1 second after the last state change, never blocking the UI.
+  const persistTimer = useRef(null);
+  const schedulePersist = useCallback((latestNotes) => {
+    clearTimeout(persistTimer.current);
+    persistTimer.current = setTimeout(() => {
+      storage.persistNotes(latestNotes);
+    }, 1000);
+  }, []);
+
+  // ── Initial load ───────────────────────────────────────────────────────────
   useEffect(() => {
-    // Initial Load
-    const loadedFolders = storage.getFolders();
-    const loadedNotes = storage.getNotes();
-    const loadedSettings = storage.getSettings();
-    
-    setFolders(loadedFolders);
-    setNotes(loadedNotes);
-    setSettings(loadedSettings);
-    
-    if (loadedFolders.length > 0) {
-      setActiveFolderId(loadedFolders[0].id);
-    }
+    (async () => {
+      const [loadedFolders, loadedNotes, loadedSettings] = await Promise.all([
+        storage.getFolders(),
+        storage.getNotes(),
+        storage.getSettings()
+      ]);
+
+      let changed = false;
+      const migratedNotes = loadedNotes.map(n => {
+        let newTitle = n.title;
+        let newContent = n.content;
+        let noteChanged = false;
+
+        // Limpa o título (Remove [MM:SS] e capitaliza)
+        if (newTitle) {
+          const originalTitle = newTitle;
+          newTitle = newTitle.replace(/\[\d{2}:\d{2}\]\s*/g, '').trim();
+          if (newTitle.length > 0) {
+            newTitle = newTitle.charAt(0).toUpperCase() + newTitle.slice(1);
+          }
+          if (newTitle !== originalTitle) noteChanged = true;
+        }
+
+        // Capitaliza início de frases no conteúdo (após tag HTML de parágrafo, ou ponto final)
+        if (newContent) {
+          const originalContent = newContent;
+          newContent = newContent.replace(/(>|\.\s+)([a-zãõáéíóúâêîôûç])/g, (match, p1, p2) => {
+            return p1 + p2.toUpperCase();
+          });
+          
+          // E também o primeiríssimo caractere se não tiver tag
+          if (newContent.length > 0 && /^[a-zãõáéíóúâêîôûç]/.test(newContent)) {
+             newContent = newContent.charAt(0).toUpperCase() + newContent.slice(1);
+          }
+
+          if (newContent !== originalContent) noteChanged = true;
+        }
+
+        if (noteChanged) {
+          changed = true;
+          return { ...n, title: newTitle, content: newContent };
+        }
+        return n;
+      });
+
+      if (changed) {
+        await storage.persistNotes(migratedNotes);
+      }
+
+      setFolders(loadedFolders);
+      setNotes(migratedNotes);
+      setSettings(loadedSettings);
+      if (loadedFolders.length > 0) setActiveFolderId(loadedFolders[0].id);
+    })();
   }, []);
 
   useEffect(() => {
     document.body.className = settings.appTheme || 'light';
   }, [settings.appTheme]);
 
-  const handleAddFolder = (name) => {
-    const newFolder = storage.saveFolder(name);
-    setFolders([...folders, newFolder]);
-    setActiveFolderId(newFolder.id);
-  };
+  // ── Folders ────────────────────────────────────────────────────────────────
 
-  const handleSaveSettings = (newSettings) => {
-    storage.saveSettings(newSettings);
+  const handleAddFolder = useCallback(async (name) => {
+    const newFolder = await storage.saveFolder(folders, name);
+    setFolders(prev => [...prev, newFolder]);
+    setActiveFolderId(newFolder.id);
+  }, [folders]);
+
+  const handleRenameFolder = useCallback(async (folderId, newName) => {
+    const updated = await storage.updateFolder(folders, folderId, newName);
+    if (updated) setFolders(prev => prev.map(f => f.id === folderId ? updated : f));
+  }, [folders]);
+
+  // ── Settings ───────────────────────────────────────────────────────────────
+
+  const handleSaveSettings = useCallback(async (newSettings) => {
+    await storage.saveSettings(newSettings);
     setSettings(newSettings);
     setShowSettings(false);
-  };
+  }, []);
 
-  const handleRecordStart = () => {
-    let targetFolderId = activeFolderId;
-    let targetNoteId = activeNoteId;
-    let currentFolders = [...folders];
+  // ── Notes: creation ────────────────────────────────────────────────────────
 
-    if (!targetNoteId) {
-      if (!targetFolderId) {
-        if (currentFolders.length === 0) {
-          const newFolder = storage.saveFolder("Geral");
-          currentFolders.push(newFolder);
-          setFolders(currentFolders);
-          targetFolderId = newFolder.id;
-          setActiveFolderId(newFolder.id);
-        } else {
-          targetFolderId = currentFolders[0].id;
-          setActiveFolderId(targetFolderId);
-        }
-      }
-      
-      const newNote = storage.saveNote(targetFolderId, "Nota de Voz Automática", "");
-      setNotes(prev => [...prev, newNote]);
-      setActiveNoteId(newNote.id);
-      targetNoteId = newNote.id;
-    }
-    return targetNoteId;
-  };
-
-  const handleTranscriptChunk = (noteId, chunkText) => {
-    setNotes(prevNotes => {
-      const currentNote = prevNotes.find(n => n.id === noteId);
-      if (currentNote) {
-        let newTitle = currentNote.title;
-        if (newTitle === 'Nova Nota' || newTitle === 'Nota de Voz Automática') {
-          const stopWords = new Set(['o', 'a', 'os', 'as', 'um', 'uma', 'uns', 'umas', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas', 'por', 'para', 'com', 'que', 'qual', 'vez', 'e', 'ou', 'mas', 'eu', 'tu', 'ele', 'ela', 'nós', 'vós', 'eles', 'elas', 'meu', 'minha', 'seu', 'sua']);
-          const words = chunkText.split(/\s+/).filter(w => w.length > 2);
-          let bestWord = '';
-          for (let w of words) {
-            const cleanWord = w.toLowerCase().replace(/[^a-zãõáéíóúâêîôûç]/g, '');
-            if (!stopWords.has(cleanWord)) {
-              if (cleanWord.length > bestWord.length) bestWord = cleanWord;
-            }
-          }
-          if (bestWord) {
-            newTitle = bestWord.charAt(0).toUpperCase() + bestWord.slice(1);
-          }
-        }
-
-        const newBlocks = [...(currentNote.blocks || [])];
-        const lastBlock = newBlocks[newBlocks.length - 1];
-        
-        if (lastBlock && lastBlock.type === 'transcription') {
-          // Append to existing transcription block
-          lastBlock.text = lastBlock.text ? lastBlock.text + ' ' + chunkText : chunkText;
-        } else {
-          // Create new transcription block
-          newBlocks.push({
-            id: crypto.randomUUID(),
-            type: 'transcription',
-            text: chunkText
-          });
-        }
-        
-        const updatedNote = storage.updateNote(noteId, { blocks: newBlocks, title: newTitle });
-        return prevNotes.map(n => n.id === noteId ? updatedNote : n);
-      }
-      return prevNotes;
-    });
-  };
-
-  const handleCreateEmptyNote = () => {
-    if (!activeFolderId) {
-      alert("Please select or create a folder first.");
-      return;
-    }
-    const newNote = storage.saveNote(activeFolderId, "Nova Nota", "");
-    setNotes([...notes, newNote]);
+  const handleCreateEmptyNote = useCallback(async () => {
+    if (!activeFolderId) { setToastMessage("Selecione ou crie uma pasta primeiro."); return; }
+    const newNote = await storage.createNote(notesRef.current, activeFolderId, "Nova Nota");
+    setNotes(prev => [...prev, newNote]);
     setActiveNoteId(newNote.id);
-  };
+    setCurrentView('editor');
+  }, [activeFolderId]);
 
-  const handleUpdateNote = (noteId, updates) => {
-    const updated = storage.updateNote(noteId, updates);
-    if (updated) {
-      setNotes(notes.map(n => n.id === noteId ? updated : n));
-    }
-  };
+  // ── Voice: recording starts ────────────────────────────────────────────────
+  // Returns the target noteId synchronously so VoiceRecorder can store it.
+  const handleRecordStart = useCallback(async () => {
+    let folderId = activeFolderId;
+    const currentFolders = folderId ? folders : [];
 
-  const handleRenameFolder = (folderId, newName) => {
-    const updated = storage.updateFolder(folderId, newName);
-    if (updated) {
-      setFolders(folders.map(f => f.id === folderId ? updated : f));
-    }
-  };
-
-  const handleDeleteNote = (noteId) => {
-    if (window.confirm("Are you sure you want to delete this note?")) {
-      storage.deleteNote(noteId);
-      setNotes(notes.filter(n => n.id !== noteId));
-      if (activeNoteId === noteId) {
-        setActiveNoteId(null);
+    if (!folderId) {
+      if (currentFolders.length === 0) {
+        const newFolder = await storage.saveFolder(folders, "Geral");
+        setFolders(prev => [...prev, newFolder]);
+        folderId = newFolder.id;
+        setActiveFolderId(folderId);
+      } else {
+        folderId = currentFolders[0].id;
+        setActiveFolderId(folderId);
       }
     }
-  };
 
-  const filteredNotes = notes.filter(n => n.folderId === activeFolderId)
-                             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  const activeNote = notes.find(n => n.id === activeNoteId);
+    // If there's already an active note, reuse it
+    if (activeNoteId) return activeNoteId;
+
+    const newNote = await storage.createNote(notesRef.current, folderId, "Nota de Voz");
+    setNotes(prev => [...prev, newNote]);
+    setActiveNoteId(newNote.id);
+    return newNote.id;
+  }, [activeFolderId, activeNoteId, folders]);
+
+  // ── Voice: each final transcript chunk ────────────────────────────────────
+  // Pure in-memory update — NO storage call here. The debounce handles persistence.
+  const handleTranscriptChunk = useCallback((noteId, chunkText) => {
+    setNotes(prev => {
+      const updated = prev.map(note => {
+        if (note.id !== noteId) return note;
+
+        // Auto-title from first spoken word
+        let title = note.title;
+        if (title === 'Nova Nota' || title === 'Nota de Voz') {
+          const stopWords = new Set(['o','a','os','as','um','uma','uns','umas','de','do','da','dos','das','em','no','na','nos','nas','por','para','com','que','qual','vez','e','ou','mas','eu','tu','ele','ela','nos','vos','eles','elas','meu','minha','seu','sua']);
+          const words = chunkText.split(/\s+/).filter(w => w.length > 2);
+          let best = '';
+          for (const w of words) {
+            const clean = w.toLowerCase().replace(/[^a-zãõáéíóúâêîôûç]/g, '');
+            if (!stopWords.has(clean) && clean.length > best.length) best = clean;
+          }
+          if (best) title = best.charAt(0).toUpperCase() + best.slice(1);
+        }
+
+        // Generate timestamp
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const timestampHtml = `<span class="timestamp text-xs text-gray-500 font-mono select-none" style="color: #6b7280; font-size: 0.75rem; user-select: none; margin-right: 4px;">[${hh}:${mm}]</span>`;
+
+        const newChunkHtml = timestampHtml + ' ' + chunkText;
+        // Emit event for TipTap Editor to insert text imperatively se já estiver aberto
+        window.dispatchEvent(new CustomEvent('onVoiceTranscript', { 
+          detail: { noteId, chunkText: newChunkHtml } 
+        }));
+
+        // Salva no estado global para que o TipTap recupere caso ainda esteja montando (evita perda de texto)
+        const newContent = (note.content || '') + newChunkHtml;
+        return { ...note, title, content: newContent };
+      });
+
+      // Schedule background persist with the new state
+      schedulePersist(updated);
+      return updated;
+    });
+  }, [schedulePersist]);
+
+  // ── Notes: manual edits (from Editor) ─────────────────────────────────────
+  const handleUpdateNote = useCallback((noteId, updates) => {
+    setNotes(prev => {
+      const updated = prev.map(n => n.id === noteId ? { ...n, ...updates } : n);
+      schedulePersist(updated);
+      return updated;
+    });
+  }, [schedulePersist]);
+
+  // ── Notes: move to folder ──────────────────────────────────────────────────
+  const handleMoveNote = useCallback((noteId, newFolderId) => {
+    setNotes(prev => {
+      const updated = prev.map(n => n.id === noteId ? { ...n, folderId: newFolderId } : n);
+      schedulePersist(updated);
+      return updated;
+    });
+  }, [schedulePersist]);
+
+  // ── Notes: delete ──────────────────────────────────────────────────────────
+  const handleDeleteNote = useCallback(async (noteId) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta nota?")) return;
+    const updated = await storage.deleteNote(notesRef.current, noteId);
+    setNotes(updated);
+    if (activeNoteId === noteId) {
+      setActiveNoteId(null);
+      setCurrentView('home');
+    }
+  }, [activeNoteId]);
+
+  // ── Derived state ──────────────────────────────────────────────────────────
+  const filteredNotes = notes
+    .filter(n => n.folderId === activeFolderId)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const activeNote  = notes.find(n => n.id === activeNoteId);
   const activeFolder = folders.find(f => f.id === activeFolderId);
 
   return (
-    <div className="app-container">
-      <Sidebar 
-        folders={folders} 
-        activeFolderId={activeFolderId} 
-        onSelectFolder={id => { setActiveFolderId(id); setActiveNoteId(null); }}
+    <div className="app-container w-full max-w-[100vw] overflow-x-hidden min-w-0">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        folders={folders}
+        notes={notes}
+        activeNoteId={activeNoteId}
+        onSelectNote={id => { setActiveNoteId(id); setCurrentView('editor'); setIsSidebarOpen(false); }}
+        activeFolderId={activeFolderId}
+        onSelectFolder={id => { setActiveFolderId(id); }}
+        onGoHome={() => { setActiveNoteId(null); setCurrentView('home'); setIsSidebarOpen(false); }}
         onAddFolder={handleAddFolder}
         onRenameFolder={handleRenameFolder}
-        onOpenSettings={() => setShowSettings(true)}
-        onOpenExport={() => setShowExportModal(true)}
+        onOpenSettings={() => { setShowSettings(true); setIsSidebarOpen(false); }}
+        onOpenExport={() => { setShowExportModal(true); setIsSidebarOpen(false); }}
       />
-      
-      <NoteList 
-        folderName={activeFolder?.name}
-        notes={filteredNotes}
-        activeNoteId={activeNoteId}
-        onSelectNote={setActiveNoteId}
-        onCreateEmptyNote={handleCreateEmptyNote}
-      />
-      
-      <Editor note={activeNote} onDelete={handleDeleteNote} onUpdateNote={handleUpdateNote} />
-      
-      <VoiceRecorder onRecordStart={handleRecordStart} onTranscriptChunk={handleTranscriptChunk} />
 
-      {showSettings && (
-        <SettingsModal 
-          settings={settings}
-          onSave={handleSaveSettings}
-          onClose={() => setShowSettings(false)}
+
+      {currentView === 'home' ? (
+        <Home 
+          notes={notes} 
+          folders={folders} 
+          onSelectNote={id => { setActiveNoteId(id); setCurrentView('editor'); setIsSidebarOpen(false); }} 
+          onDeleteNote={handleDeleteNote}
+          onMoveNote={handleMoveNote}
+        />
+      ) : (
+        <Editor 
+          note={activeNote} 
+          onDelete={handleDeleteNote} 
+          onUpdateNote={handleUpdateNote} 
+          settings={settings} 
+          onBack={() => { setActiveNoteId(null); setCurrentView('home'); }} 
         />
       )}
 
+      <VoiceRecorder onRecordStart={handleRecordStart} onCreateNote={handleCreateEmptyNote} onTranscriptChunk={handleTranscriptChunk} onToast={setToastMessage} onOpenMenu={() => setIsSidebarOpen(true)} currentView={currentView} />
+
+      {showSettings && (
+        <SettingsModal settings={settings} onSave={handleSaveSettings} onClose={() => setShowSettings(false)} />
+      )}
       {showExportModal && (
-        <ExportModal 
-          folders={folders}
-          notes={notes}
-          onClose={() => setShowExportModal(false)}
-        />
+        <ExportModal folders={folders} notes={notes} onClose={() => setShowExportModal(false)} onToast={setToastMessage} />
+      )}
+      {toastMessage && (
+        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}
     </div>
   );

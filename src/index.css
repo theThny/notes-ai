@@ -1,3 +1,20 @@
+/* =========================================
+   TRAVA GLOBAL ABSOLUTA (FLEXBOX OVERFLOW)
+   ========================================= */
+html, body, #root {
+  max-width: 100vw !important;
+  width: 100% !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box !important;
+  margin: 0;
+  padding: 0;
+}
+
+/* A Mágica do Flexbox: Impede que os filhos alarguem o pai invisivelmente */
+* {
+  min-width: 0;
+}
+
 :root {
   /* Minimalist Premium Colors */
   --bg-color: #ffffff;
@@ -26,8 +43,9 @@
   
   /* Classic Mode overrides will redefine these if needed, 
      but mostly it will just change typography and background tint */
-  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --content-width: 800px;
+  --fade-gradient: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 40%, transparent 100%);
 }
 
 body.classic {
@@ -38,33 +56,35 @@ body.classic {
   --text-muted: #333333;
   --primary-color: #000000;
   --fab-text: #ffffff;
-  --font-family: 'Courier New', Courier, monospace;
+  --font-family: 'Montserrat', Courier, monospace;
   --link-color: #0000ee;
   --ai-text: #000000;
   --ai-bg: rgba(0,0,0,0.03);
   --ai-border: #000000;
+  --fade-gradient: linear-gradient(to top, rgba(244, 236, 216, 0.95) 0%, rgba(244, 236, 216, 0.7) 40%, transparent 100%);
 }
 
 body.dark {
-  --bg-color: #1e1e1e;
-  --sidebar-bg: #252526;
-  --border-color: #333333;
+  --bg-color: #0A0A0B;
+  --sidebar-bg: #121214;
+  --border-color: #1F1F22;
   --text-main: #e0e0e0;
   --text-muted: #9ca3af;
   --primary-color: #ffffff;
   --primary-hover: #cccccc;
-  --hover-bg: #2d2d30;
-  --active-bg: #37373d;
+  --hover-bg: #1A1A1D;
+  --active-bg: #242429;
   --surface-hover: rgba(255,255,255,0.05);
   --fab-text: #000000;
-  --shadow-color: rgba(0,0,0,0.5);
-  --btn-bg: #2d2d2d;
+  --shadow-color: rgba(0,0,0,0.6);
+  --btn-bg: #1A1A1D;
   --btn-text: #ffffff;
-  --btn-border: #555555;
+  --btn-border: #333333;
   --link-color: #ec4899;
   --ai-text: #ec4899;
   --ai-bg: rgba(236, 72, 153, 0.05);
   --ai-border: #ec4899;
+  --fade-gradient: linear-gradient(to top, rgba(10, 10, 11, 0.95) 0%, rgba(10, 10, 11, 0.7) 40%, transparent 100%);
 }
 
 body.accessible {
@@ -75,11 +95,12 @@ body.accessible {
   --text-muted: #222222;
   --primary-color: #000000;
   --fab-text: #ffffff;
-  --font-family: system-ui, Arial, sans-serif;
+  --font-family: 'Montserrat', system-ui, Arial, sans-serif;
   --shadow-color: rgba(0,0,0,0.3);
   --link-color: #1d4ed8;
   --ai-text: #1d4ed8;
   --ai-border: #1d4ed8;
+  --fade-gradient: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 40%, transparent 100%);
 }
 
 body.accessible-dark {
@@ -95,7 +116,7 @@ body.accessible-dark {
   --surface-hover: rgba(255,255,255,0.1);
   --fab-text: #000000;
   --shadow-color: rgba(255,255,255,0.2);
-  --font-family: system-ui, Arial, sans-serif;
+  --font-family: 'Montserrat', system-ui, Arial, sans-serif;
   --btn-bg: #000000;
   --btn-text: #ffff00;
   --btn-border: #ffff00;
@@ -103,6 +124,7 @@ body.accessible-dark {
   --ai-text: #ffff00;
   --ai-bg: rgba(255,255,0,0.1);
   --ai-border: #ffff00;
+  --fade-gradient: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.7) 40%, transparent 100%);
 }
 
 * {
@@ -160,40 +182,184 @@ input, textarea {
 }
 
 .sidebar-title {
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   letter-spacing: -0.5px;
+  margin-bottom: 20px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  background-color: var(--hover-bg);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+}
+.search-icon {
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+.search-bar input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  outline: none;
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+.search-shortcut {
+  background-color: rgba(0,0,0,0.05);
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .folder-list {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 20px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  color: var(--text-muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-main);
+}
+.nav-item.active {
+  background-color: var(--hover-bg);
+  color: var(--text-main);
+  font-weight: 600;
+}
+.nav-item svg {
+  margin-right: 12px;
+}
+
+.section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding-left: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .folder-item {
   display: flex;
   align-items: center;
-  padding: 10px;
+  padding: 8px 12px;
   border-radius: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
   color: var(--text-muted);
+  cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
+  font-size: 0.95rem;
 }
-
 .folder-item:hover {
   background-color: var(--hover-bg);
   color: var(--text-main);
 }
-
-.folder-item.active {
-  background-color: var(--active-bg);
-  color: var(--text-main);
+.folder-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.folder-badge {
+  background-color: rgba(0,0,0,0.05);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+.folder-icon {
+  margin-right: 12px;
+  color: var(--text-muted);
+  opacity: 0.7;
 }
 
-.folder-icon {
-  margin-right: 10px;
+.folder-children {
+  padding-left: 32px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.note-child-item {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.2s;
+}
+.note-child-item:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-main);
+}
+.note-child-item.active {
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid var(--border-color);
+}
+.user-profile {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+  border-radius: 12px;
+  background-color: var(--hover-bg);
+  cursor: pointer;
+}
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #111827;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-right: 12px;
+}
+.user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  line-height: 1.2;
+}
+.user-plan {
+  font-size: 0.75rem;
+  color: #8b5cf6;
+  font-weight: 500;
 }
 
 /* Note List */
@@ -273,11 +439,18 @@ input, textarea {
 
 .editor-content {
   flex: 1;
-  padding: 40px;
+  padding: 16px; /* Default for mobile */
   overflow-y: auto;
+  overflow-x: hidden;
   max-width: var(--content-width);
   margin: 0 auto;
   width: 100%;
+  box-sizing: border-box;
+}
+@media (min-width: 768px) {
+  .editor-content {
+    padding: 40px;
+  }
 }
 
 .markdown-body {
@@ -508,7 +681,7 @@ body.classic .markdown-body h2 {
 
 /* Editable Components */
 .editor-title-input {
-  font-size: 2rem;
+  font-size: clamp(1.25rem, 5vw, 1.75rem);
   font-weight: 700;
   letter-spacing: -0.5px;
   border: none;
@@ -517,6 +690,9 @@ body.classic .markdown-body h2 {
   width: 100%;
   color: var(--text-main);
   font-family: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .editor-title-input::placeholder {
@@ -584,4 +760,342 @@ body.classic .markdown-body h2 {
 @keyframes wave {
   0%, 100% { transform: scaleY(0.4); }
   50% { transform: scaleY(1); }
+}
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  outline: none;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+.ProseMirror > * + * {
+  margin-top: 0.75em;
+}
+.ProseMirror ul,
+.ProseMirror ol {
+  padding: 0 1.2rem;
+}
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3 {
+  line-height: 1.2;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+.ProseMirror ul[data-type="taskList"] p {
+  margin: 0;
+}
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+}
+.ProseMirror ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+  margin-top: 0.2rem;
+}
+.ProseMirror ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
+}
+.ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--primary-color);
+}
+/* Contenção do Editor TipTap */
+.ProseMirror {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-wrap: anywhere !important; /* Força quebra de linha em qualquer lugar se necessário */
+  word-break: break-word !important;
+  white-space: pre-wrap !important; /* Preserva o espaçamento do TipTap */
+  outline: none;
+}
+.ProseMirror * {
+  max-width: 100%;
+}
+.ProseMirror a { color: var(--link-color); text-decoration: none; border-bottom: 1px solid var(--link-color); cursor: pointer; transition: all 0.2s; }
+.ProseMirror a:hover { opacity: 0.8; }
+.ProseMirror ul[data-type="taskList"] { list-style: none; padding: 0; }
+.ProseMirror ul[data-type="taskList"] li { display: flex; align-items: center; gap: 8px; }
+.ProseMirror ul:not([data-type="taskList"]), .ProseMirror ol { padding-left: 1.5rem; }
+.ProseMirror mark {
+  background-color: var(--tiptap-highlight-color, yellow);
+  color: #121212 !important;
+  padding: 0.125em 0.25em;
+  border-radius: 0.25rem;
+  font-weight: 500;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+
+/* Imagem e iframes em Bloco (Notion Style) */
+.ProseMirror img, .ProseMirror iframe {
+  display: block;
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+  margin: 2rem auto 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Bloco de Destaque / Callout (Abaixo da imagem) */
+.ProseMirror blockquote {
+  border-left: 3px solid #3b82f6; /* Borda azul característica */
+  background-color: rgba(59, 130, 246, 0.1); /* Fundo azul translúcido */
+  padding: 12px 16px;
+  margin: 0 0 1.5rem 0;
+  border-radius: 0 4px 4px 0;
+  color: #e2e8f0;
+  font-style: italic;
+}
+
+/* Espaçamento limpo para Listas */
+.ProseMirror ul, .ProseMirror ol {
+  margin-bottom: 1.5rem;
+}
+.ProseMirror li p {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+/* Moodboard Component UI */
+/* 1. Trava Absoluta do Pai */
+.moodboard-container {
+  user-select: text;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important; /* Blinda vazamentos */
+}
+.moodboard-container a {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.mb-title { margin-top: 0; font-size: 1.5rem; color: currentColor; word-break: break-word; }
+.mb-desc { margin-bottom: 24px; font-size: 0.95rem; line-height: 1.5; color: currentColor; opacity: 0.85; word-break: break-word; }
+.mb-palette { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+.mb-color { width: 48px; height: 48px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); }
+
+/* 2. Grid de Miniaturas (Wrap) para Mobile e Desktop */
+.mb-gallery {
+  display: grid !important;
+  grid-template-columns: repeat(3, 1fr) !important; /* Força 3 colunas independentemente do tamanho da tela */
+  gap: 8px !important; /* Espaçamento reduzido no mobile */
+  width: 100% !important;
+  margin-top: 16px;
+}
+
+/* 3. Ajuste das Imagens (Quadradinhos) */
+.mb-image {
+  width: 100% !important;
+  height: 80px !important; /* Altura fixa pequena para formar o quadradinho no mobile */
+  object-fit: cover !important; /* Corta o excesso sem achatar a foto */
+  border-radius: 6px !important;
+}
+
+/* 4. Desktop (Expande a altura e respiro) */
+@media (min-width: 768px) {
+  /* Padding removido pois NodeViewWrapper cuida disso */
+  .mb-gallery {
+    gap: 16px !important;
+  }
+  .mb-image {
+    height: 180px !important; /* Imagens maiores no PC */
+    border-radius: 8px !important;
+  }
+}
+
+/* Responsive Sidebar & Home UI */
+.md-hidden { display: none; }
+@media (max-width: 768px) {
+  .md-hidden { display: block; }
+  .md-show { display: none !important; }
+  
+  .sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 75vh;
+    border-radius: 1.5rem 1.5rem 0 0;
+    background-color: var(--sidebar-bg);
+    z-index: 2000;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -4px 24px rgba(0,0,0,0.2);
+  }
+  .sidebar.open {
+    transform: translateY(0);
+  }
+  
+  .note-list-container {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 1000;
+  }
+}
+
+@media (min-width: 769px) {
+  .sidebar {
+    transform: translateX(0) !important;
+  }
+  .hide-on-desktop {
+    display: none !important;
+  }
+}
+
+/* Masonry / Grid */
+.home-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  align-items: start;
+}
+@media (min-width: 768px) {
+  .home-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  /* No desktop com split view, mantemos no máximo 2 colunas para as notas */
+  .home-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.home-card {
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+  cursor: pointer;
+}
+.home-card:hover {
+  transform: translateY(-4px);
+}
+
+/* =========================================
+   MOBILE OVERFLOW FIXES (TIPTAP & MOODBOARD)
+   ========================================= */
+
+/* 1. Opção Nuclear de Box Model para o Editor inteiro */
+.ProseMirror, .ProseMirror * {
+  box-sizing: border-box !important;
+}
+
+/* 2. Blindagem do Container da IA */
+.moodboard-container {
+  width: 100% !important;
+  max-width: 100% !important; /* Impede a caixa de crescer além do editor */
+  box-sizing: border-box !important;
+  padding: 16px !important;
+}
+
+/* Força os links longos a quebrarem em vez de vazarem a tela */
+.moodboard-container a {
+  display: inline-block;
+  width: 100%;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important; 
+  white-space: normal !important;
+}
+
+
+/* Tailwind pseudo-utilities for structural fix */
+
+/* Split View CSS Customizado */
+.split-layout-container {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 120px;
+}
+
+.split-right-col {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .split-layout-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+  }
+  .split-right-col {
+    display: block;
+  }
+}
+
+@media (max-width: 1023px) {
+  .hide-on-mobile { display: none !important; }
+}
+@media (min-width: 1024px) {
+  .hide-on-desktop { display: none !important; }
+}
+
+.mock-gallery-grid {
+  column-count: 2;
+  column-gap: 16px;
+}
+
+.gallery-item {
+  break-inside: avoid;
+  margin-bottom: 16px;
+  border-radius: 1.25rem;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  background-color: #f3f4f6;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.gallery-item img {
+  width: 100%;
+  display: block;
+  transition: transform 0.5s;
+}
+
+.gallery-item:hover img {
+  transform: scale(1.05);
+}
+
+.w-full { width: 100%; }
+.max-w-full { max-width: 100%; }
+.overflow-x-hidden { overflow-x: hidden; }
+.min-w-0 { min-width: 0; }
+.box-border { box-sizing: border-box; }
+.px-4 { padding-left: 16px; padding-right: 16px; }
+@media (min-width: 768px) {
+  .md\:px-8 { padding-left: 32px; padding-right: 32px; }
+}
+
+@media (max-width: 768px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-chips-container {
+    display: none !important;
+  }
+}
+
+/* Esconder barra de rolagem mas manter funcionalidade */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

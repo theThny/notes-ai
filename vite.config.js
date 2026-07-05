@@ -5,4 +5,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: '/notes-ai/',
+  optimizeDeps: {
+    include: [
+      '@tiptap/react', 
+      '@tiptap/core', 
+      '@tiptap/starter-kit',
+      'use-sync-external-store'
+    ]
+  }
 })

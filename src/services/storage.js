@@ -1,117 +1,124 @@
+import { cleanText } from '../utils/sanitize';
+import { encryptData, decryptData, getOrGenerateKey } from '../utils/crypto';
+
 const FOLDERS_KEY = 'notes_ai_folders';
-const NOTES_KEY = 'notes_ai_notes';
+const NOTES_KEY   = 'notes_ai_notes';
 const SETTINGS_KEY = 'notes_ai_settings';
 
+// ─── Low-level helpers ────────────────────────────────────────────────────────
+
+const secureSetItem = async (key, data) => {
+  const cryptoKey = await getOrGenerateKey();
+  const encrypted = await encryptData(data, cryptoKey);
+  localStorage.setItem(key, JSON.stringify(encrypted));
+};
+
+const secureGetItem = async (key, defaultData) => {
+  const cryptoKey = await getOrGenerateKey();
+  const raw = localStorage.getItem(key);
+  if (!raw) return defaultData;
+
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch { return defaultData; }
+
+  // Missing ciphertext (invalid format) -> reject
+  if (!parsed || typeof parsed !== 'object' || !parsed.ciphertext) return defaultData;
+
+  try {
+    return await decryptData(parsed, cryptoKey);
+  } catch {
+    return defaultData;
+  }
+};
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+
 export const storage = {
-  // Folders
-  getFolders: () => {
-    const data = localStorage.getItem(FOLDERS_KEY);
+
+  // ── Folders ──────────────────────────────────────────────────────────────
+
+  getFolders: async () => {
+    const defaultFolders = [{ id: 'default', name: 'General' }];
+    const data = await secureGetItem(FOLDERS_KEY, null);
     if (!data) {
-      const defaultFolders = [{ id: 'default', name: 'General' }];
-      localStorage.setItem(FOLDERS_KEY, JSON.stringify(defaultFolders));
+      await secureSetItem(FOLDERS_KEY, defaultFolders);
       return defaultFolders;
     }
-    return JSON.parse(data);
+    return data;
   },
-  
-  saveFolder: (name) => {
-    const folders = storage.getFolders();
-    const newFolder = { id: crypto.randomUUID(), name };
-    folders.push(newFolder);
-    localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+
+  saveFolder: async (folders, name) => {
+    const newFolder = { id: crypto.randomUUID(), name: cleanText(name) };
+    const updated = [...folders, newFolder];
+    await secureSetItem(FOLDERS_KEY, updated);
     return newFolder;
   },
 
-  updateFolder: (folderId, newName) => {
-    const folders = storage.getFolders();
-    const index = folders.findIndex(f => f.id === folderId);
-    if (index !== -1) {
-      folders[index].name = newName;
-      localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
-      return folders[index];
-    }
-    return null;
+  updateFolder: async (folders, folderId, newName) => {
+    const updated = folders.map(f =>
+      f.id === folderId ? { ...f, name: cleanText(newName) } : f
+    );
+    await secureSetItem(FOLDERS_KEY, updated);
+    return updated.find(f => f.id === folderId) || null;
   },
 
-  // Notes
-  getNotes: () => {
-    const data = localStorage.getItem(NOTES_KEY);
-    const notes = data ? JSON.parse(data) : [];
-    let migrated = false;
-    
-    notes.forEach(note => {
-      if (note.content !== undefined) {
-        // Migrate string content to blocks array
-        note.blocks = [{
-          id: crypto.randomUUID(),
-          type: 'transcription',
-          text: note.content
-        }];
-        delete note.content;
-        migrated = true;
-      }
-    });
+  // ── Notes ─────────────────────────────────────────────────────────────────
 
-    if (migrated) {
-      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-    }
-    
-    return notes;
+  getNotes: async () => {
+    return await secureGetItem(NOTES_KEY, []);
   },
 
-  saveNote: (folderId, title, content) => {
-    const notes = storage.getNotes();
+  // Creates a brand-new note record and persists it.
+  // Receives the CURRENT notes array to avoid an extra read.
+  createNote: async (notes, folderId, title) => {
     const newNote = {
       id: crypto.randomUUID(),
       folderId,
-      title,
-      blocks: content ? [{ id: crypto.randomUUID(), type: 'transcription', text: content }] : [],
+      title: cleanText(title),
+      content: '',
       createdAt: new Date().toISOString()
     };
-    notes.push(newNote);
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
+    await secureSetItem(NOTES_KEY, [...notes, newNote]);
     return newNote;
   },
 
-  updateNote: (noteId, updates) => {
-    const notes = storage.getNotes();
-    const index = notes.findIndex(n => n.id === noteId);
-    if (index !== -1) {
-      notes[index] = { ...notes[index], ...updates };
-      localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-      return notes[index];
-    }
-    return null;
+  // Persists the entire notes array.
+  // The caller is responsible for mutating the array correctly.
+  // DOMPurify sanitization is applied here, right before encryption.
+  persistNotes: async (notes) => {
+    const sanitized = notes.map(note => ({
+      ...note,
+      title: cleanText(note.title),
+      content: cleanText(note.content || ''),
+      blocks: []
+    }));
+    await secureSetItem(NOTES_KEY, sanitized);
   },
 
-  deleteNote: (noteId) => {
-    const notes = storage.getNotes();
-    const filteredNotes = notes.filter(n => n.id !== noteId);
-    localStorage.setItem(NOTES_KEY, JSON.stringify(filteredNotes));
+  deleteNote: async (notes, noteId) => {
+    const updated = notes.filter(n => n.id !== noteId);
+    await secureSetItem(NOTES_KEY, updated);
+    return updated;
   },
 
-  // Settings
-  getSettings: () => {
-    const data = localStorage.getItem(SETTINGS_KEY);
-    const parsed = data ? JSON.parse(data) : {};
-    
-    // Migration from old `apiKey`
-    const legacyKey = parsed.apiKey || '';
-    
+  // ── Settings ──────────────────────────────────────────────────────────────
+
+  getSettings: async () => {
+    const data = await secureGetItem(SETTINGS_KEY, {});
     return {
-      geminiKey: localStorage.getItem('geminiKey') || parsed.geminiKey || legacyKey || '',
-      groqKey: localStorage.getItem('groqKey') || parsed.groqKey || '',
-      activeProvider: localStorage.getItem('activeProvider') || parsed.activeProvider || 'gemini',
-      appTheme: localStorage.getItem('appTheme') || parsed.appTheme || 'light',
-      interactiveMode: parsed.interactiveMode || false
+      geminiKey:      data.geminiKey      || '',
+      groqKey:        data.groqKey        || '',
+      activeProvider: data.activeProvider || 'gemini',
+      appTheme:       data.appTheme       || 'light',
+      interactiveMode: data.interactiveMode || false
     };
   },
 
-  saveSettings: (settings) => {
-    localStorage.setItem('geminiKey', settings.geminiKey || '');
-    localStorage.setItem('groqKey', settings.groqKey || '');
-    localStorage.setItem('activeProvider', settings.activeProvider || 'gemini');
-    localStorage.setItem('appTheme', settings.appTheme || 'light');
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  saveSettings: async (settings) => {
+    await secureSetItem(SETTINGS_KEY, settings);
+    // Remove legacy unencrypted keys
+    ['geminiKey', 'groqKey', 'activeProvider', 'appTheme'].forEach(k =>
+      localStorage.removeItem(k)
+    );
   }
 };
