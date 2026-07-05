@@ -175,13 +175,8 @@ function App() {
           if (best) title = best.charAt(0).toUpperCase() + best.slice(1);
         }
 
-        // Generate timestamp
-        const now = new Date();
-        const hh = String(now.getHours()).padStart(2, '0');
-        const mm = String(now.getMinutes()).padStart(2, '0');
-        const timestampHtml = `<span class="timestamp text-xs text-gray-500 font-mono select-none" style="color: #6b7280; font-size: 0.75rem; user-select: none; margin-right: 4px;">[${hh}:${mm}]</span>`;
-
-        const newChunkHtml = timestampHtml + ' ' + chunkText;
+        // Não inserimos mais o timestamp a cada chunk para evitar repetições no Android
+        const newChunkHtml = chunkText;
         // Emit event for TipTap Editor to insert text imperatively se já estiver aberto
         window.dispatchEvent(new CustomEvent('onVoiceTranscript', { 
           detail: { noteId, chunkText: newChunkHtml } 
