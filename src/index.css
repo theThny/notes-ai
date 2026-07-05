@@ -962,16 +962,9 @@ body.classic .markdown-body h2 {
 /* Masonry / Grid */
 .home-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 24px;
-  align-items: start;
-}
-@media (min-width: 768px) {
-  .home-grid { grid-template-columns: repeat(2, 1fr); }
-}
-@media (min-width: 1024px) {
-  /* No desktop com split view, mantemos no máximo 2 colunas para as notas */
-  .home-grid { grid-template-columns: repeat(2, 1fr); }
+  align-items: stretch;
 }
 
 .home-card {

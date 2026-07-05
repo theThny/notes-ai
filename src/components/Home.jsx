@@ -474,16 +474,17 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
                 onMouseLeave={handleTouchEnd}
                 onContextMenu={(e) => e.preventDefault()}
                 /* A MÁGICA ESTÁ AQUI: relative e overflow-hidden cortam a imagem nas bordas do card */
-                className="home-card relative overflow-hidden rounded-[1.25rem] p-6 min-h-[160px] shadow-sm cursor-pointer flex flex-col justify-center"
+                className="home-card relative overflow-hidden rounded-[1.25rem] p-6 shadow-sm cursor-pointer flex flex-col"
                 style={{ 
                   position: 'relative', 
                   overflow: 'hidden', 
                   borderRadius: '1.25rem', 
                   padding: '1.5rem', 
-                  minHeight: '160px', 
+                  minHeight: '220px', 
+                  aspectRatio: '1 / 1.1', /* Força uma proporção consistente para não ficarem absurdamente altos ou largos */
                   display: 'flex', 
                   flexDirection: 'column', 
-                  justifyContent: 'center', 
+                  justifyContent: 'space-between', 
                   cursor: 'pointer',
                   backgroundColor: cardColor,
                   backgroundImage: bgImage,
@@ -539,8 +540,8 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
 
                 {/* CAMADA 2: CONTEÚDO DE TEXTO (Fica na frente: z-10 e contido na esquerda se houver imagem) */}
                 <div 
-                  className="relative z-10"
-                  style={{ position: 'relative', zIndex: 10, width: hasImage ? '66.666667%' : '100%' }}
+                  className="relative z-10 flex flex-col h-full"
+                  style={{ position: 'relative', zIndex: 10, width: hasImage ? '66.666667%' : '100%', flexGrow: 1 }}
                 >
                   <h3 
                     className="text-gray-900 font-bold mb-2"
