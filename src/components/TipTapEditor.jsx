@@ -13,6 +13,7 @@ import { OrderedList } from '@tiptap/extension-ordered-list';
 import { ListItem } from '@tiptap/extension-list-item';
 import MoodboardExtension from '../extensions/MoodboardExtension';
 import AIExtension from '../extensions/AIExtension';
+import { HiddenTimestampExtension } from '../extensions/HiddenTimestampExtension';
 import { Bold, Italic, List, ListTodo, Type } from 'lucide-react';
 
 export const MenuBar = ({ editor }) => {
@@ -91,6 +92,7 @@ export const TipTapEditor = ({ content, onChange, onInit }) => {
       Image.configure({ inline: true, allowBase64: true }),
       MoodboardExtension,
       AIExtension,
+      HiddenTimestampExtension,
     ],
     content: content || '<p></p>',
     onUpdate: ({ editor }) => {

@@ -3,6 +3,7 @@ import { Folder, Plus, Settings, Check, Download, Home, Search, Lightbulb, Check
 
 export const Sidebar = ({ 
   isOpen, 
+  currentView,
   onClose, 
   folders, 
   notes = [], 
@@ -11,6 +12,7 @@ export const Sidebar = ({
   onSelectNote,
   onSelectFolder, 
   onGoHome, 
+  onGoTrash,
   onAddFolder, 
   onRenameFolder, 
   onOpenSettings, 
@@ -49,7 +51,7 @@ export const Sidebar = ({
         {/* Header com Search */}
         <div style={{ padding: '24px 20px 0 20px' }}>
           <div className="sidebar-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>Notes AI</span>
+            <span>Arandu Notes</span>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button className="icon-btn" onClick={onOpenExport} title="Exportar Notas">
                 <Download size={16} />
@@ -71,7 +73,7 @@ export const Sidebar = ({
           
           {/* Menu de Navegação Principal */}
           <div style={{ marginBottom: '32px' }}>
-            <div className="nav-item active" onClick={onGoHome}>
+            <div className={`nav-item ${currentView === 'home' ? 'active' : ''}`} onClick={onGoHome}>
               <Home size={18} />
               <span>Início</span>
             </div>
@@ -83,7 +85,7 @@ export const Sidebar = ({
               <CheckSquare size={18} />
               <span>Tarefas</span>
             </div>
-            <div className="nav-item">
+            <div className={`nav-item ${currentView === 'trash' ? 'active' : ''}`} onClick={onGoTrash}>
               <Trash size={18} />
               <span>Lixeira</span>
             </div>

@@ -211,16 +211,42 @@ function App() {
     });
   }, [schedulePersist]);
 
-  // ── Notes: delete ──────────────────────────────────────────────────────────
-  const handleDeleteNote = useCallback(async (noteId) => {
-    if (!window.confirm("Tem certeza que deseja excluir esta nota?")) return;
-    const updated = await storage.deleteNote(notesRef.current, noteId);
-    setNotes(updated);
+  // ── Notes: delete (Soft Delete para Lixeira) ───────────────────────────────
+  const handleSoftDeleteNote = useCallback(async (noteId) => {
+    setNotes(prev => {
+      const updated = prev.map(n => n.id === noteId ? { ...n, isDeleted: true } : n);
+      schedulePersist(updated);
+      return updated;
+    });
     if (activeNoteId === noteId) {
       setActiveNoteId(null);
       setCurrentView('home');
     }
+  }, [activeNoteId, schedulePersist]);
+
+  // ── Trash: Hard Delete & Restore ───────────────────────────────────────────
+  const handleHardDeleteNote = useCallback(async (noteId) => {
+    const updated = await storage.deleteNote(notesRef.current, noteId);
+    setNotes(updated);
+    if (activeNoteId === noteId) {
+      setActiveNoteId(null);
+      setCurrentView('trash');
+    }
   }, [activeNoteId]);
+
+  const handleRestoreNote = useCallback((noteId) => {
+    setNotes(prev => {
+      const updated = prev.map(n => n.id === noteId ? { ...n, isDeleted: false } : n);
+      schedulePersist(updated);
+      return updated;
+    });
+  }, [schedulePersist]);
+
+  const handleEmptyTrash = useCallback(async () => {
+    const activeNotes = notesRef.current.filter(n => !n.isDeleted);
+    await storage.persistNotes(activeNotes);
+    setNotes(activeNotes);
+  }, []);
 
   // ── Derived state ──────────────────────────────────────────────────────────
   const filteredNotes = notes
@@ -234,6 +260,7 @@ function App() {
     <div className="app-container w-full max-w-[100vw] overflow-x-hidden min-w-0">
       <Sidebar
         isOpen={isSidebarOpen}
+        currentView={currentView}
         onClose={() => setIsSidebarOpen(false)}
         folders={folders}
         notes={notes}
@@ -242,6 +269,7 @@ function App() {
         activeFolderId={activeFolderId}
         onSelectFolder={id => { setActiveFolderId(id); }}
         onGoHome={() => { setActiveNoteId(null); setCurrentView('home'); setIsSidebarOpen(false); }}
+        onGoTrash={() => { setActiveNoteId(null); setCurrentView('trash'); setIsSidebarOpen(false); }}
         onAddFolder={handleAddFolder}
         onRenameFolder={handleRenameFolder}
         onOpenSettings={() => { setShowSettings(true); setIsSidebarOpen(false); }}
@@ -251,17 +279,30 @@ function App() {
 
       {currentView === 'home' ? (
         <Home 
-          notes={notes} 
+          notes={notes.filter(n => !n.isDeleted)} 
           folders={folders} 
           onSelectNote={id => { setActiveNoteId(id); setCurrentView('editor'); setIsSidebarOpen(false); }} 
-          onDeleteNote={handleDeleteNote}
+          onDeleteNote={handleSoftDeleteNote}
           onMoveNote={handleMoveNote}
           theme={settings.appTheme || 'light'}
+        />
+      ) : currentView === 'trash' ? (
+        <Home 
+          isTrashMode={true}
+          notes={notes.filter(n => n.isDeleted)} 
+          folders={folders} 
+          onSelectNote={id => { setActiveNoteId(id); setCurrentView('editor'); setIsSidebarOpen(false); }} 
+          onDeleteNote={handleHardDeleteNote}
+          onRestoreNote={handleRestoreNote}
+          onEmptyTrash={handleEmptyTrash}
+          onMoveNote={handleMoveNote}
+          theme={settings.appTheme || 'light'}
+          onBack={() => { setActiveNoteId(null); setCurrentView('home'); }}
         />
       ) : (
         <Editor 
           note={activeNote} 
-          onDelete={handleDeleteNote} 
+          onDelete={handleSoftDeleteNote} 
           onUpdateNote={handleUpdateNote} 
           settings={settings} 
           onBack={() => { setActiveNoteId(null); setCurrentView('home'); }} 

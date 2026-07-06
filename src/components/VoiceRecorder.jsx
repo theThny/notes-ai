@@ -130,22 +130,40 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
   if (!window.SpeechRecognition && !window.webkitSpeechRecognition) return null;
 
   return (
-    <div className="fab-container hide-on-desktop" style={{ 
-      position: 'fixed', 
-      bottom: '0', 
-      left: '0', 
-      width: '100%', 
-      padding: '48px 24px 32px 24px', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      gap: '16px', 
-      zIndex: 1000, 
-      boxSizing: 'border-box',
-      background: 'linear-gradient(to top, rgba(15,15,18,0.95) 0%, rgba(15,15,18,0.7) 40%, transparent 100%)',
-      pointerEvents: 'none'
-    }}>
-      
+    <>
+      {/* Elementos Globais (Visíveis no Desktop e Mobile) */}
+      {isRecording && (
+        <div style={{ position: 'fixed', bottom: '120px', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', zIndex: 1001, pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>
+            Gravando...
+            <Waveform />
+          </div>
+        </div>
+      )}
+
+      {interimTranscript && (
+        <div style={{ position: 'fixed', bottom: '144px', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '400px', backgroundColor: 'rgba(24, 24, 27, 0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: 'white', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)', border: '1px solid rgba(63, 63, 70, 0.5)', zIndex: 1000, textAlign: 'center', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite', pointerEvents: 'none' }}>
+          <p style={{ opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{interimTranscript}</p>
+        </div>
+      )}
+
+      {/* Container Mobile (Bottom Bar) */}
+      <div className="fab-container hide-on-desktop" style={{ 
+        position: 'fixed', 
+        bottom: '0', 
+        left: '0', 
+        width: '100%', 
+        padding: '48px 24px 32px 24px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        gap: '16px', 
+        zIndex: 1000, 
+        boxSizing: 'border-box',
+        background: 'linear-gradient(to top, rgba(15,15,18,0.95) 0%, rgba(15,15,18,0.7) 40%, transparent 100%)',
+        pointerEvents: 'none'
+      }}>
+        
       {currentView === 'home' && (
         <button 
           onClick={onOpenMenu} 
@@ -174,20 +192,6 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
 
       {/* Centro: Fabs Container */}
       <div style={{ pointerEvents: 'auto', display: 'flex', gap: currentView === 'editor' ? '24px' : '0', position: 'relative' }}>
-        {isRecording && (
-          <div className="fab-status" style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              Gravando...
-              <Waveform />
-            </div>
-          </div>
-        )}
-
-        {interimTranscript && (
-          <div className="fixed bottom-24 left-1/2 transform -translate-x-1/2 w-[90%] md:w-auto max-w-md bg-zinc-900/90 backdrop-blur-md text-white text-sm px-5 py-3 rounded-2xl shadow-xl border border-zinc-700/50 z-50 text-center animate-pulse" style={{ position: 'fixed', bottom: '96px', left: '50%', transform: 'translateX(-50%)', width: '90%', maxWidth: '400px', backgroundColor: 'rgba(24, 24, 27, 0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: 'white', padding: '12px 20px', borderRadius: '16px', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)', border: '1px solid rgba(63, 63, 70, 0.5)', zIndex: 1000, textAlign: 'center', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }}>
-            <p style={{ opacity: 0.8, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>{interimTranscript}</p>
-          </div>
-        )}
         
         {currentView === 'editor' && (
           <button 
@@ -234,7 +238,7 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
               {isRecording ? "Parar gravação..." : "Criar nova anotação"}
             </div>
           </div>
-        ) : (
+        ) : currentView !== 'trash' ? (
           <button
             onClick={toggleRecording}
             title={isRecording ? "Parar gravação" : "Iniciar gravação"}
@@ -242,7 +246,7 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
           >
             {isRecording ? <Square fill="#dc2626" size={24} /> : <div style={{ width: '24px', height: '24px', borderRadius: '50%', backgroundColor: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#fff' }}></div></div>}
           </button>
-        )}
+        ) : null}
 
         {currentView === 'editor' && (
           <button 
@@ -285,5 +289,83 @@ export const VoiceRecorder = ({ onRecordStart, onCreateNote, onTranscriptChunk, 
         )}
       </div>
     </div>
+
+    {/* Container Desktop (Bottom Right) */}
+    <div className="hide-on-mobile" style={{
+      position: 'fixed',
+      bottom: '32px',
+      right: '32px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      gap: '16px',
+      zIndex: 1000,
+      pointerEvents: 'auto'
+    }}>
+      {currentView !== 'trash' && (
+        <>
+          {/* Record Button */}
+          <button
+            onClick={toggleRecording}
+            title={isRecording ? "Parar gravação" : "Gravar transcrição"}
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
+              boxShadow: isRecording ? '0 0 20px rgba(239, 68, 68, 0.6)' : '0 8px 32px rgba(0,0,0,0.4)',
+              transition: 'all 0.3s ease',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+          >
+            {isRecording ? (
+              <Square fill="#dc2626" size={28} />
+            ) : (
+              <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fff' }}></div>
+              </div>
+            )}
+          </button>
+
+          {/* Plus Manual Note Button (Glassmorphism) */}
+          <button
+            onClick={async () => {
+              if (onCreateNote) await onCreateNote();
+            }}
+            title="Criar anotação manual"
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              transition: 'all 0.3s ease',
+              color: '#fff',
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+          >
+            <Plus size={32} strokeWidth={2} />
+          </button>
+        </>
+      )}
+    </div>
+  </>
   );
 };

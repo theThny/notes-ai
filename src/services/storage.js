@@ -1,9 +1,25 @@
 import { cleanText } from '../utils/sanitize';
 import { encryptData, decryptData, getOrGenerateKey } from '../utils/crypto';
 
-const FOLDERS_KEY = 'notes_ai_folders';
-const NOTES_KEY   = 'notes_ai_notes';
-const SETTINGS_KEY = 'notes_ai_settings';
+const FOLDERS_KEY = 'arandu_notes_folders';
+const NOTES_KEY   = 'arandu_notes_notes';
+const SETTINGS_KEY = 'arandu_notes_settings';
+
+// ─── Migration Script (Executado 1x na carga) ──────────────────────────────────
+try {
+  const migrateKey = (oldKey, newKey) => {
+    const oldData = localStorage.getItem(oldKey);
+    if (oldData && !localStorage.getItem(newKey)) {
+      localStorage.setItem(newKey, oldData);
+    }
+  };
+  migrateKey('notes_ai_folders', FOLDERS_KEY);
+  migrateKey('notes_ai_notes', NOTES_KEY);
+  migrateKey('notes_ai_settings', SETTINGS_KEY);
+  migrateKey('notes_ai_username', 'arandu_notes_username');
+} catch (e) {
+  console.warn("Falha na migração dos dados antigos", e);
+}
 
 // ─── Low-level helpers ────────────────────────────────────────────────────────
 

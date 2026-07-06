@@ -56,7 +56,7 @@ export const Editor = ({ note, onDelete, onUpdateNote, settings, onBack }) => {
 
   const handleTitleBlur = () => {
     if (note && title !== note.title) {
-      onUpdateNote(note.id, { title });
+      onUpdateNote(note.id, { title, isCustomTitle: true });
     }
   };
 
@@ -67,7 +67,8 @@ export const Editor = ({ note, onDelete, onUpdateNote, settings, onBack }) => {
       setContent(purified);
       
       // Dispatch for Global State and Local State sync
-      if (newTitle !== undefined && newTitle !== title) {
+      // Only auto-update the title if the user hasn't set a custom one
+      if (!note.isCustomTitle && newTitle !== undefined && newTitle !== title) {
         setTitle(newTitle);
         onUpdateNote(note.id, { content: purified, title: newTitle });
       } else {
@@ -301,7 +302,11 @@ export const Editor = ({ note, onDelete, onUpdateNote, settings, onBack }) => {
           className="editor-title-input"
           style={{ flex: 1, minWidth: 0 }}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            // Salva no banco imediatamente como customizado para garantir que o auto-title não subscreva
+            if (note) onUpdateNote(note.id, { title: e.target.value, isCustomTitle: true });
+          }}
           onBlur={handleTitleBlur}
           onKeyDown={(e) => {
             if (e.key === 'Enter') e.currentTarget.blur();
@@ -342,9 +347,6 @@ export const Editor = ({ note, onDelete, onUpdateNote, settings, onBack }) => {
               {isExpanding ? 'Expandindo conhecimento...' : 'Expandir com IA'}
             </button>
           </div>
-          <button className="icon-btn" style={{ color: 'var(--danger-color)' }} onClick={() => onDelete(note.id)} title="Excluir Nota">
-            <Trash2 size={20} />
-          </button>
         </div>
       </div>
       

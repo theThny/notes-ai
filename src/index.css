@@ -1036,12 +1036,7 @@ body.classic .markdown-body h2 {
   }
 }
 
-@media (max-width: 1023px) {
-  .hide-on-mobile { display: none !important; }
-}
-@media (min-width: 1024px) {
-  .hide-on-desktop { display: none !important; }
-}
+/* Removed conflicting media queries for hide-on-mobile and hide-on-desktop at 1024px */
 
 .mock-gallery-grid {
   column-count: 2;
@@ -1098,4 +1093,13 @@ body.classic .markdown-body h2 {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.greeting-title {
+  font-size: 3.0rem;
+}
+@media (min-width: 768px) {
+  .greeting-title {
+    font-size: 3.8rem;
+  }
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Plus, Folder, Search, MoreVertical, LayoutGrid, List, Share, FolderDown, Trash2, X, ArrowUpRight } from 'lucide-react';
+import { ChevronDown, Plus, Folder, Search, MoreVertical, LayoutGrid, List, Share, FolderDown, Trash2, X, ArrowUpRight, RotateCcw, ArrowLeft } from 'lucide-react';
 import PremiumWeatherIcon from './PremiumWeatherIcon';
 
 // Função para extrair texto limpo de HTML
@@ -58,7 +58,7 @@ const getRandomImage = (htmlContent) => {
   return images[randomIndex];
 };
 
-export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onMoveNote, theme = 'light' }) => {
+export const Home = ({ isTrashMode = false, onBack, onEmptyTrash, onRestoreNote, notes = [], folders = [], onSelectNote, onDeleteNote, onMoveNote, theme = 'light' }) => {
   const [selectedFolder, setSelectedFolder] = useState('all');
   const [activeNoteMenu, setActiveNoteMenu] = useState(null);
   const [showMoveModal, setShowMoveModal] = useState(null);
@@ -67,6 +67,8 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
 
   const [userName, setUserName] = useState('');
   const [showNameModal, setShowNameModal] = useState(false);
+  const [showEmptyTrashModal, setShowEmptyTrashModal] = useState(false);
+  const [noteToDeletePermanently, setNoteToDeletePermanently] = useState(null);
   const [nameInput, setNameInput] = useState('');
 
   const pressTimer = useRef(null);
@@ -113,7 +115,7 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
 
   useEffect(() => {
     // Carregar o nome salvo no LocalStorage
-    const savedName = localStorage.getItem('notes_ai_username');
+    const savedName = localStorage.getItem('arandu_notes_username');
     if (savedName) {
       setUserName(savedName);
     } else {
@@ -221,47 +223,83 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
         
         {/* Lado Esquerdo: Saudação */}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={{ color: '#9CA3AF', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '16px' }}>
-            NOTES AI
-          </span>
-          <h1 style={{ fontSize: '3.5rem', fontWeight: 800, color: '#FFFFFF', lineHeight: 1.05, letterSpacing: '-0.02em', margin: 0 }}>
-            {greetingText}
+          {isTrashMode && onBack && (
+            <button 
+              className="hide-on-desktop"
+              onClick={onBack}
+              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', padding: '0 0 16px 0', display: 'flex', alignItems: 'center' }}
+            >
+              <ArrowLeft size={24} />
+            </button>
+          )}
+          {!isTrashMode && (
+            <span style={{ color: '#9CA3AF', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '16px' }}>
+              ARANDU NOTES
+            </span>
+          )}
+          <h1 className="greeting-title" style={{ fontWeight: 800, color: '#FFFFFF', lineHeight: 1.05, letterSpacing: '-0.02em', margin: 0 }}>
+            {isTrashMode ? 'Lixeira' : greetingText}
           </h1>
-          <h1 style={{ fontSize: '3.5rem', fontWeight: 400, fontStyle: 'italic', color: '#FFFFFF', lineHeight: 1.05, letterSpacing: '-0.02em', margin: 0 }}>
-            {userName || 'Visitante'}
-          </h1>
+          {!isTrashMode && (
+            <h1 className="greeting-title" style={{ fontWeight: 400, fontStyle: 'italic', color: '#FFFFFF', lineHeight: 1.05, letterSpacing: '-0.02em', margin: 0 }}>
+              {userName || 'Visitante'}
+            </h1>
+          )}
         </div>
         
-        {/* Lado Direito: Widget de Clima */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '10px 24px',
-          borderRadius: '9999px',
-          backgroundColor: 'transparent',
-          border: '1px solid rgba(255, 255, 255, 0.08)',
-          marginTop: '12px'
-        }}>
-          <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <PremiumWeatherIcon type={weather.type || 'sun'} size={22} />
-          </span>
-          
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', fontWeight: 400, marginLeft: '4px' }}>
-            {weather.city || 'Local Atual'}
-          </span>
-          
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', margin: '0 4px' }}>•</span>
-          
-          <span style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 700 }}>
-            {weather.temp !== null ? `${weather.temp}°C` : '--°C'}
-          </span>
-        </div>
+        {/* Lado Direito: Widget de Clima ou Esvaziar Lixeira */}
+        {isTrashMode ? (
+          <button 
+            className="hide-on-mobile transition-all hover:bg-white/10"
+            onClick={() => setShowEmptyTrashModal(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 24px',
+              borderRadius: '9999px',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              marginTop: '12px',
+              color: '#ef4444',
+              cursor: 'pointer',
+              fontWeight: 600
+            }}>
+            <Trash2 size={20} />
+            Esvaziar Lixeira
+          </button>
+        ) : (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 24px',
+            borderRadius: '9999px',
+            backgroundColor: 'transparent',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            marginTop: '12px'
+          }}>
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <PremiumWeatherIcon type={weather.type || 'sun'} size={22} />
+            </span>
+            
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '1rem', fontWeight: 400, marginLeft: '4px' }}>
+              {weather.city || 'Local Atual'}
+            </span>
+            
+            <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.8rem', margin: '0 4px' }}>•</span>
+            
+            <span style={{ color: '#FFFFFF', fontSize: '1.1rem', fontWeight: 700 }}>
+              {weather.temp !== null ? `${weather.temp}°C` : '--°C'}
+            </span>
+          </div>
+        )}
 
       </div>
 
       {/* 2. Menu de Pastas (Exclusivo Mobile / Blindado com Inline Styles) */}
-      <div 
+      {!isTrashMode && (
+        <div 
         className="mobile-chips-container" 
         style={{ 
           display: 'flex', 
@@ -332,7 +370,8 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
             {folder.name}
           </button>
         ))}
-      </div>
+        </div>
+      )}
 
       {/* Extração Dinâmica de Imagens para a Galeria */}
       {(() => {
@@ -383,7 +422,7 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
         
         {/* Coluna Esquerda: Notas */}
         <div style={{ width: '100%' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px', opacity: 0.8 }}>NOTAS RECENTES</h2>
+          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px', opacity: 0.8 }}>{isTrashMode ? 'NOTAS EXCLUÍDAS' : 'NOTAS RECENTES'}</h2>
           
           <div className="home-grid">
         {filteredNotes.length === 0 ? (
@@ -521,7 +560,7 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
 
         {/* Coluna Direita: Galeria (Oculta no mobile/tablet, visível apenas no desktop) */}
         <div className="split-right-col" style={{ width: '100%' }}>
-          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px', opacity: 0.8 }}>GALERIA</h2>
+          <h2 style={{ fontSize: '11px', fontWeight: 'bold', color: '#6b7280', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px', opacity: 0.8 }}>{isTrashMode ? 'IMAGENS EXCLUÍDAS' : 'GALERIA'}</h2>
           {finalGalleryImages.length > 0 ? (
             <div className="mock-gallery-grid">
               {finalGalleryImages.map((imgObj, idx) => (
@@ -554,38 +593,59 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'var(--bg-color)', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', padding: '24px 24px 40px', boxShadow: '0 -10px 25px var(--shadow-color)' }} onClick={e => e.stopPropagation()}>
             <div style={{ width: '40px', height: '4px', backgroundColor: '#4b5563', borderRadius: '2px', margin: '0 auto 24px auto' }} />
             
-            <button onClick={async () => {
-              const noteToShare = notes.find(n => n.id === activeNoteMenu);
-              if (navigator.share && noteToShare) {
-                try {
-                  await navigator.share({
-                    title: noteToShare.title,
-                    text: extractSnippet(noteToShare.content)
-                  });
-                } catch (e) {}
-              } else if (noteToShare) {
-                navigator.clipboard.writeText(extractSnippet(noteToShare.content));
-                alert("Nota copiada para a área de transferência!");
-              }
-              setActiveNoteMenu(null);
-            }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: 'var(--text-main)', fontSize: '1.1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)' }}>
-              <Share size={24} color="var(--text-muted)" /> Compartilhar
-            </button>
-            
-            <button onClick={(e) => { 
-              e.stopPropagation(); 
-              setShowMoveModal(activeNoteMenu); 
-              setActiveNoteMenu(null);
-            }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: 'var(--text-main)', fontSize: '1.1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)' }}>
-              <FolderDown size={24} color="var(--text-muted)" /> Mover para pasta
-            </button>
-            
-            <button onClick={() => { 
-              if (onDeleteNote) onDeleteNote(activeNoteMenu); 
-              setActiveNoteMenu(null); 
-            }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: '#ef4444', fontSize: '1.1rem', background: 'none', border: 'none' }}>
-              <Trash2 size={24} color="#ef4444" /> Excluir nota
-            </button>
+            {isTrashMode ? (
+              <>
+                <button onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (onRestoreNote) onRestoreNote(activeNoteMenu); 
+                  setActiveNoteMenu(null);
+                }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: 'var(--text-main)', fontSize: '1.1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)' }}>
+                  <RotateCcw size={24} color="var(--text-muted)" /> Restaurar nota
+                </button>
+                <button onClick={(e) => {
+                  e.stopPropagation();
+                  setNoteToDeletePermanently(activeNoteMenu);
+                  setActiveNoteMenu(null);
+                }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: '#ef4444', fontSize: '1.1rem', background: 'none', border: 'none' }}>
+                  <Trash2 size={24} color="#ef4444" /> Excluir permanentemente
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={async () => {
+                  const noteToShare = notes.find(n => n.id === activeNoteMenu);
+                  if (navigator.share && noteToShare) {
+                    try {
+                      await navigator.share({
+                        title: noteToShare.title,
+                        text: extractSnippet(noteToShare.content)
+                      });
+                    } catch (e) {}
+                  } else if (noteToShare) {
+                    navigator.clipboard.writeText(extractSnippet(noteToShare.content));
+                    alert("Nota copiada para a área de transferência!");
+                  }
+                  setActiveNoteMenu(null);
+                }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: 'var(--text-main)', fontSize: '1.1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)' }}>
+                  <Share size={24} color="var(--text-muted)" /> Compartilhar
+                </button>
+                
+                <button onClick={(e) => { 
+                  e.stopPropagation(); 
+                  setShowMoveModal(activeNoteMenu); 
+                  setActiveNoteMenu(null);
+                }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: 'var(--text-main)', fontSize: '1.1rem', background: 'none', border: 'none', borderBottom: '1px solid var(--border-color)' }}>
+                  <FolderDown size={24} color="var(--text-muted)" /> Mover para pasta
+                </button>
+                
+                <button onClick={() => { 
+                  if (onDeleteNote) onDeleteNote(activeNoteMenu); 
+                  setActiveNoteMenu(null); 
+                }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '16px', width: '100%', padding: '16px 0', color: '#ef4444', fontSize: '1.1rem', background: 'none', border: 'none' }}>
+                  <Trash2 size={24} color="#ef4444" /> Excluir nota
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
@@ -637,55 +697,85 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
           onClick={(e) => e.stopPropagation()}
           onContextMenu={(e) => e.preventDefault()}
         >
-          <button 
-            className="transition-colors hover:bg-white/10"
-            onClick={async (e) => {
-              e.stopPropagation();
-              setActiveNoteMenu(null);
-              const noteToShare = notes.find(n => n.id === desktopMenu.selectedNote);
-              if (navigator.share && noteToShare) {
-                try {
-                  await navigator.share({
-                    title: noteToShare.title,
-                    text: extractSnippet(noteToShare.content)
-                  });
-                } catch (e) {}
-              } else if (noteToShare) {
-                navigator.clipboard.writeText(extractSnippet(noteToShare.content));
-                alert("Nota copiada para a área de transferência!");
-              }
-              setDesktopMenu(prev => ({ ...prev, isVisible: false }));
-            }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#fff', fontSize: '0.9rem', textAlign: 'left' }}
-          >
-            <Share size={18} color="rgba(255,255,255,0.7)" /> Compartilhar
-          </button>
-          
-          <button 
-            className="transition-colors hover:bg-white/10"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveNoteMenu(null);
-              setShowMoveModal(desktopMenu.selectedNote);
-              setDesktopMenu(prev => ({ ...prev, isVisible: false }));
-            }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#fff', fontSize: '0.9rem', textAlign: 'left' }}
-          >
-            <FolderDown size={18} color="rgba(255,255,255,0.7)" /> Mover para pasta
-          </button>
-          
-          <button 
-            className="transition-colors hover:bg-red-500/20"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActiveNoteMenu(null);
-              if (onDeleteNote) onDeleteNote(desktopMenu.selectedNote);
-              setDesktopMenu(prev => ({ ...prev, isVisible: false }));
-            }}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.9rem', textAlign: 'left' }}
-          >
-            <Trash2 size={18} color="#ef4444" /> Excluir nota
-          </button>
+          {isTrashMode ? (
+            <>
+              <button 
+                className="transition-colors hover:bg-white/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveNoteMenu(null);
+                  if (onRestoreNote) onRestoreNote(desktopMenu.selectedNote);
+                  setDesktopMenu(prev => ({ ...prev, isVisible: false }));
+                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#fff', fontSize: '0.9rem', textAlign: 'left' }}
+              >
+                <RotateCcw size={18} color="rgba(255,255,255,0.7)" /> Restaurar nota
+              </button>
+              <button 
+                className="transition-colors hover:bg-red-500/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setNoteToDeletePermanently(desktopMenu.selectedNote);
+                  setDesktopMenu(prev => ({ ...prev, isVisible: false }));
+                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.9rem', textAlign: 'left' }}
+              >
+                <Trash2 size={18} color="#ef4444" /> Excluir permanentemente
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                className="transition-colors hover:bg-white/10"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  setActiveNoteMenu(null);
+                  const noteToShare = notes.find(n => n.id === desktopMenu.selectedNote);
+                  if (navigator.share && noteToShare) {
+                    try {
+                      await navigator.share({
+                        title: noteToShare.title,
+                        text: extractSnippet(noteToShare.content)
+                      });
+                    } catch (e) {}
+                  } else if (noteToShare) {
+                    navigator.clipboard.writeText(extractSnippet(noteToShare.content));
+                    alert("Nota copiada para a área de transferência!");
+                  }
+                  setDesktopMenu(prev => ({ ...prev, isVisible: false }));
+                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#fff', fontSize: '0.9rem', textAlign: 'left' }}
+              >
+                <Share size={18} color="rgba(255,255,255,0.7)" /> Compartilhar
+              </button>
+              
+              <button 
+                className="transition-colors hover:bg-white/10"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveNoteMenu(null);
+                  setShowMoveModal(desktopMenu.selectedNote);
+                  setDesktopMenu(prev => ({ ...prev, isVisible: false }));
+                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#fff', fontSize: '0.9rem', textAlign: 'left' }}
+              >
+                <FolderDown size={18} color="rgba(255,255,255,0.7)" /> Mover para pasta
+              </button>
+              
+              <button 
+                className="transition-colors hover:bg-red-500/20"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveNoteMenu(null);
+                  if (onDeleteNote) onDeleteNote(desktopMenu.selectedNote);
+                  setDesktopMenu(prev => ({ ...prev, isVisible: false }));
+                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '12px', width: '100%', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: 'none', border: 'none', color: '#ef4444', fontSize: '0.9rem', textAlign: 'left' }}
+              >
+                <Trash2 size={18} color="#ef4444" /> Excluir nota
+              </button>
+            </>
+          )}
         </div>
       )}
 
@@ -693,8 +783,8 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
       {showNameModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(12px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <div style={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', padding: '32px', borderRadius: '24px', width: '90%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 24px 48px -12px rgba(0,0,0,0.5)' }}>
-            <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px' }}>Como podemos chamar você?</h2>
-            <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '24px', textAlign: 'center' }}>Adicione seu nome para personalizar a sua experiência no Notes AI.</p>
+            <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Como podemos chamar você?</h2>
+            <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '24px', textAlign: 'center' }}>Adicione seu nome para personalizar a sua experiência no Arandu Notes.</p>
             <input 
               type="text" 
               placeholder="Seu primeiro nome"
@@ -702,7 +792,7 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
               onChange={(e) => setNameInput(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && nameInput.trim()) {
-                  localStorage.setItem('notes_ai_username', nameInput.trim());
+                  localStorage.setItem('arandu_notes_username', nameInput.trim());
                   setUserName(nameInput.trim());
                   setShowNameModal(false);
                 }
@@ -713,7 +803,7 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
             <button 
               onClick={() => {
                 if (nameInput.trim()) {
-                  localStorage.setItem('notes_ai_username', nameInput.trim());
+                  localStorage.setItem('arandu_notes_username', nameInput.trim());
                   setUserName(nameInput.trim());
                   setShowNameModal(false);
                 }
@@ -724,6 +814,86 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
               Continuar
             </button>
           </div>
+        </div>
+      )}
+
+      {/* 6. Modal de Confirmar Esvaziar Lixeira */}
+      {showEmptyTrashModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(12px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', padding: '32px', borderRadius: '24px', width: '90%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 24px 48px -12px rgba(0,0,0,0.5)' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+              <Trash2 size={32} color="#ef4444" />
+            </div>
+            <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Esvaziar Lixeira?</h2>
+            <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '32px', textAlign: 'center' }}>Tem certeza? Todas as notas na lixeira serão excluídas permanentemente. Esta ação não pode ser desfeita.</p>
+            
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => setShowEmptyTrashModal(false)}
+                style={{ flex: 1, padding: '16px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 600, fontSize: '1rem', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', transition: 'background-color 0.2s' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  if (onEmptyTrash) onEmptyTrash();
+                  setShowEmptyTrashModal(false);
+                }}
+                style={{ flex: 1, padding: '16px', borderRadius: '12px', backgroundColor: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '1rem', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' }}
+              >
+                Esvaziar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6.5. Modal de Confirmar Exclusão de Nota Individual */}
+      {noteToDeletePermanently !== null && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0, 0, 0, 0.7)', backdropFilter: 'blur(12px)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ backgroundColor: '#18181b', border: '1px solid rgba(255,255,255,0.1)', padding: '32px', borderRadius: '24px', width: '90%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 24px 48px -12px rgba(0,0,0,0.5)' }}>
+            <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '24px' }}>
+              <Trash2 size={32} color="#ef4444" />
+            </div>
+            <h2 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px', textAlign: 'center' }}>Excluir nota permanentemente?</h2>
+            <p style={{ color: '#a1a1aa', fontSize: '0.9rem', marginBottom: '32px', textAlign: 'center' }}>Tem certeza? Esta ação apagará a nota de forma definitiva e não poderá ser desfeita.</p>
+            
+            <div style={{ display: 'flex', gap: '12px', width: '100%' }}>
+              <button 
+                onClick={() => setNoteToDeletePermanently(null)}
+                style={{ flex: 1, padding: '16px', borderRadius: '12px', backgroundColor: 'rgba(255,255,255,0.05)', color: '#fff', fontWeight: 600, fontSize: '1rem', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', transition: 'background-color 0.2s' }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={() => {
+                  if (onDeleteNote) onDeleteNote(noteToDeletePermanently);
+                  setNoteToDeletePermanently(null);
+                }}
+                style={{ flex: 1, padding: '16px', borderRadius: '12px', backgroundColor: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '1rem', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' }}
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* 7. Mobile FAB para Esvaziar Lixeira */}
+      {isTrashMode && (
+        <div className="hide-on-desktop" style={{ position: 'fixed', bottom: '40px', left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: '90%', maxWidth: '350px' }}>
+          <button 
+            onClick={() => setShowEmptyTrashModal(true)}
+            style={{
+              width: '100%', padding: '16px', borderRadius: '9999px',
+              backgroundColor: '#ff1a1a', color: '#fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              boxShadow: '0 8px 32px rgba(255, 26, 26, 0.4)', border: 'none', cursor: 'pointer',
+              fontWeight: 700, fontSize: '1rem'
+            }}
+          >
+            <Trash2 size={20} /> Excluir permanentemente
+          </button>
         </div>
       )}
     </div>
