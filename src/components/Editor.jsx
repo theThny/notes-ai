@@ -268,8 +268,8 @@ export const Editor = ({ note, onDelete, onUpdateNote, settings, onBack }) => {
 
   return (
     <div className="editor-container w-full max-w-[100vw] overflow-x-hidden min-w-0" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Top Navigation Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', flexShrink: 0 }}>
+      {/* Top Navigation Bar (Apenas Mobile) */}
+      <div className="hide-on-desktop" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', flexShrink: 0 }}>
         <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: 'var(--text-main)', cursor: 'pointer', padding: '4px' }}>
           <ChevronLeft size={28} strokeWidth={2.5} />
         </button>
@@ -296,9 +296,10 @@ export const Editor = ({ note, onDelete, onUpdateNote, settings, onBack }) => {
         </button>
       </div>
 
-      <div className="editor-header">
+      <div className="editor-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', gap: '16px' }}>
         <input 
           className="editor-title-input"
+          style={{ flex: 1, minWidth: 0 }}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onBlur={handleTitleBlur}
@@ -307,9 +308,9 @@ export const Editor = ({ note, onDelete, onUpdateNote, settings, onBack }) => {
           }}
           placeholder="Título da Nota..."
         />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
           {/* MenuBar removido a pedido do usuário */}
-          <div className="editor-ai-controls hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="editor-ai-controls hide-on-mobile" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
             <CustomAISelector 
               selectedAI={selectedAI}
               setSelectedAI={setSelectedAI}
