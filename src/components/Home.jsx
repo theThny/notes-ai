@@ -183,42 +183,12 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
     }
   }
 
-  let headerGlow = 'none';
-  if (theme === 'dark' && weather.temp !== null) {
-    const makeGlow = (c1, c2) => `radial-gradient(circle at 0px 0px, rgba(255,255,255,0.15) 0%, transparent 100px), radial-gradient(circle at 50px 40px, ${c1} 0%, transparent 250px), radial-gradient(circle at 120px 100px, ${c2} 0%, transparent 400px)`;
-    
-    if (isNight) {
-      headerGlow = makeGlow('rgba(102, 0, 255, 0.35)', 'rgba(255, 0, 128, 0.25)');
-    } else if (weather.type === 'rain' || weather.type === 'storm') {
-      headerGlow = makeGlow('rgba(0, 229, 255, 0.35)', 'rgba(41, 98, 255, 0.25)');
-    } else if (weather.temp >= 28) {
-      headerGlow = makeGlow('rgba(255, 51, 0, 0.35)', 'rgba(255, 200, 0, 0.25)');
-    } else if (weather.temp <= 18) {
-      headerGlow = makeGlow('rgba(0, 153, 255, 0.35)', 'rgba(0, 255, 204, 0.25)');
-    } else {
-      headerGlow = makeGlow('rgba(0, 200, 83, 0.35)', 'rgba(255, 214, 0, 0.25)');
-    }
-  }
+
 
   return (
     <div className="home-container scrollbar-hide" style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%', flex: 1, backgroundColor: 'var(--bg-color)', color: 'var(--text-main)', padding: '40px 5%', overflowX: 'hidden', overflowY: 'auto' }}>
       
-      {/* Glow Decorativo Global da Página (Preso à quina superior esquerda) */}
-      {theme === 'dark' && (
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '400px',
-          maxWidth: '100%',
-          height: '400px',
-          backgroundImage: headerGlow,
-          filter: 'blur(50px)',
-          zIndex: 0,
-          pointerEvents: 'none',
-          opacity: 0.6
-        }} />
-      )}
+
 
       {/* 1. Cabeçalho Principal */}
       <div style={{ position: 'relative', marginBottom: '36px', marginTop: '8px', padding: '0 4px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '24px' }}>
@@ -474,17 +444,16 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
                 onMouseLeave={handleTouchEnd}
                 onContextMenu={(e) => e.preventDefault()}
                 /* A MÁGICA ESTÁ AQUI: relative e overflow-hidden cortam a imagem nas bordas do card */
-                className="home-card relative overflow-hidden rounded-[1.25rem] p-6 shadow-sm cursor-pointer flex flex-col"
+                className="home-card relative overflow-hidden rounded-[1.25rem] p-6 min-h-[160px] shadow-sm cursor-pointer flex flex-col justify-center"
                 style={{ 
                   position: 'relative', 
                   overflow: 'hidden', 
                   borderRadius: '1.25rem', 
                   padding: '1.5rem', 
-                  minHeight: '220px', 
-                  aspectRatio: '1 / 1.1', /* Força uma proporção consistente para não ficarem absurdamente altos ou largos */
+                  minHeight: '160px', 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  justifyContent: 'space-between', 
+                  justifyContent: 'center', 
                   cursor: 'pointer',
                   backgroundColor: cardColor,
                   backgroundImage: bgImage,
@@ -540,8 +509,8 @@ export const Home = ({ notes = [], folders = [], onSelectNote, onDeleteNote, onM
 
                 {/* CAMADA 2: CONTEÚDO DE TEXTO (Fica na frente: z-10 e contido na esquerda se houver imagem) */}
                 <div 
-                  className="relative z-10 flex flex-col h-full"
-                  style={{ position: 'relative', zIndex: 10, width: hasImage ? '66.666667%' : '100%', flexGrow: 1 }}
+                  className="relative z-10"
+                  style={{ position: 'relative', zIndex: 10, width: hasImage ? '66.666667%' : '100%' }}
                 >
                   <h3 
                     className="text-gray-900 font-bold mb-2"

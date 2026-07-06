@@ -43,7 +43,7 @@ html, body, #root {
   
   /* Classic Mode overrides will redefine these if needed, 
      but mostly it will just change typography and background tint */
-  --font-family: 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --content-width: 800px;
   --fade-gradient: linear-gradient(to top, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.7) 40%, transparent 100%);
 }
@@ -56,7 +56,7 @@ body.classic {
   --text-muted: #333333;
   --primary-color: #000000;
   --fab-text: #ffffff;
-  --font-family: 'Montserrat', Courier, monospace;
+  --font-family: 'Inter', Courier, monospace;
   --link-color: #0000ee;
   --ai-text: #000000;
   --ai-bg: rgba(0,0,0,0.03);
@@ -962,9 +962,16 @@ body.classic .markdown-body h2 {
 /* Masonry / Grid */
 .home-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
   gap: 24px;
-  align-items: stretch;
+  align-items: start;
+}
+@media (min-width: 768px) {
+  .home-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 1024px) {
+  /* No desktop com split view, mantemos no máximo 2 colunas para as notas */
+  .home-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 .home-card {
